@@ -88,7 +88,7 @@ export function Hero({ sectionIds }: { sectionIds: string[] }) {
           </Reveal>
         </div>
 
-        <div id="hero-card-slot" className="hidden md:block">
+        <div id="hero-card-slot" className="block">
           <Reveal delay={0.15} direction="right">
             <ProfileCard />
           </Reveal>

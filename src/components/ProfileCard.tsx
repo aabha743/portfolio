@@ -22,7 +22,7 @@ export function ProfileCard() {
   };
 
   return (
-    <div className="hidden md:flex justify-center">
+    <div className="flex justify-center">
       <div
         ref={ref}
         onMouseMove={onMove}
