@@ -34,15 +34,7 @@ export function SnapScroll({
   const currentRef = useRef(0);
   const lastWheelRef = useRef(0);
   const deltaRef = useRef(0);
-  const [enabled, setEnabled] = useState(false);
-
-  useEffect(() => {
-    const mq = window.matchMedia("(min-width: 1024px) and (hover: hover)");
-    const update = () => setEnabled(mq.matches);
-    update();
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, []);
+  const [enabled] = useState(true);
 
   const animateTo = useCallback((targetVal: number) => {
     const container = containerRef.current;
@@ -167,11 +159,44 @@ export function SnapScroll({
       else if (e.key === "End") { e.preventDefault(); animateTo(count - 1); }
     };
 
+    let touchStartY = 0;
+    let touchStartX = 0;
+
+    const onTouchStart = (e: TouchEvent) => {
+      if (animatingRef.current) return;
+      touchStartY = e.touches[0].clientY;
+      touchStartX = e.touches[0].clientX;
+    };
+
+    const onTouchEnd = (e: TouchEvent) => {
+      if (animatingRef.current) return;
+      const touchEndY = e.changedTouches[0].clientY;
+      const touchEndX = e.changedTouches[0].clientX;
+      const diffY = touchStartY - touchEndY;
+      const diffX = touchStartX - touchEndX;
+
+      // Swipe threshold is 50px vertical, with vertical dominance
+      if (Math.abs(diffY) > 50 && Math.abs(diffY) > Math.abs(diffX)) {
+        const el = getSectionEl();
+        if (el && sectionIsScrollable(el)) {
+          const goingDown = diffY > 0;
+          if (goingDown && !sectionAtBottom(el)) return;
+          if (!goingDown && !sectionAtTop(el)) return;
+        }
+        animateTo(currentRef.current + (diffY > 0 ? 1 : -1));
+      }
+    };
+
     window.addEventListener("wheel", onWheel, { passive: false });
     window.addEventListener("keydown", onKey);
+    window.addEventListener("touchstart", onTouchStart, { passive: true });
+    window.addEventListener("touchend", onTouchEnd, { passive: true });
+
     return () => {
       window.removeEventListener("wheel", onWheel);
       window.removeEventListener("keydown", onKey);
+      window.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("touchend", onTouchEnd);
     };
   }, [enabled, animateTo, count]);
 
